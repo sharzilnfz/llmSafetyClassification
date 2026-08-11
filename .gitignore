@@ -38,11 +38,9 @@ wheels/
 checkpoints/
 models_saved/
 
-# Datasets & large data dumps (keep structure via .gitkeep)
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
+# Datasets - allow tracked dataset files in data/
+# (Oversized raw CSVs >100MB should be compressed with gzip or stored as parquet)
+
 
 # Environment & local secrets
 .env
