@@ -2,8 +2,7 @@
 name = "cse440-project"
 version = "0.1.0"
 description = "CSE440 NLP Project"
-requires-python = ">=3.12
-"
+requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.14.0",
     "datasets>=5.0.1",
