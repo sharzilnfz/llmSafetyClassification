@@ -40,6 +40,7 @@ models_saved/
 
 # Datasets - allow tracked dataset files in data/
 # (Oversized raw CSVs >100MB should be compressed with gzip or stored as parquet)
+data/train_clean.csv
 
 
 # Environment & local secrets
