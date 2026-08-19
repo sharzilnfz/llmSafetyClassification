@@ -1,0 +1,4 @@
+Model,Config,Val F1
+BERT Base,"lr=2e-05, batch_size=16",0.960902881809032
+BERT Base,"lr=3e-05, batch_size=32",0.9602260370125427
+BERT Base,"lr=5e-05, batch_size=16",0.9590558702828054
