@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGuard AI | Red-Team Stress Test</title>
+  <meta name="description" content="Automated 16-case red-team prompt safety benchmark suite with live scoring.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D Scroll-Driven WebGL Background -->
+  <canvas id="threeBgCanvas"></canvas>
+
+  <!-- Sticky Minimal Header -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </div>
+        <span class="brand-title">AegisGuard AI</span>
+      </a>
+
+      <!-- Page Links -->
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Playground</a>
+        <a href="latent.html" class="nav-link">3D Space</a>
+        <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+        <a href="taxonomy.html" class="nav-link">Taxonomy</a>
+        <a href="stresstest.html" class="nav-link active">Stress Test</a>
+      </nav>
+
+      <div class="header-meta">
+        <span class="badge badge-outline">16 Test Cases</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <section class="page-header">
+      <h1 class="page-title">Automated Red-Team Benchmark Suite</h1>
+      <p class="page-subtitle">
+        1-click evaluation of the Soft-Voting Ensemble across 16 diverse multi-class attack, jailbreak, and safe prompt cases.
+      </p>
+    </section>
+
+    <!-- Stress Test Action Card -->
+    <div class="card" style="margin-bottom: 28px;">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Live Benchmark Execution</h2>
+          <p class="card-description">Runs sequential inference and computes batch accuracy and confusion metrics</p>
+        </div>
+        <button id="btnRunStressTest" class="btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Run 16-Case Benchmark
+        </button>
+      </div>
+
+      <!-- Animated Progress Bar -->
+      <div id="stressProgress" style="width: 100%; height: 6px; background: var(--border); border-radius: var(--radius-full); overflow: hidden; margin-bottom: 20px; display: none;">
+        <div id="stressProgressBar" style="width: 100%; height: 100%; background: var(--foreground); transform: scaleX(0); transform-origin: left; transition: transform 0.08s ease; will-change: transform;"></div>
+      </div>
+
+      <!-- Summary Metrics Grid -->
+      <div id="stressResultsContainer" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+        <div class="card-subtle-box">
+          <div class="stat-label">Batch Accuracy</div>
+          <div id="stressAccuracy" class="stat-val" style="color:var(--status-safe);">0.0%</div>
+        </div>
+        <div class="card-subtle-box">
+          <div class="stat-label">Passed Prompts</div>
+          <div id="stressPassedCount" class="stat-val">0 / 16 Passed</div>
+        </div>
+        <div class="card-subtle-box">
+          <div class="stat-label">Test Macro F1</div>
+          <div id="stressMacroF1" class="stat-val">0.0000</div>
+        </div>
+      </div>
+
+      <!-- Results Data Table -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Test Prompt</th>
+              <th>Expected Ground Truth</th>
+              <th>Model Prediction</th>
+              <th>Confidence</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="stressTableBody">
+            <tr>
+              <td colspan="6" style="text-align:center; color:var(--muted-foreground); padding:28px;">
+                Click "Run 16-Case Benchmark" above to begin live evaluation.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="index.html">Playground</a>
+        <span>•</span>
+        <a href="leaderboard.html">Leaderboard</a>
+        <span>•</span>
+        <a href="https://github.com/sharzilnfz/llmSafetyClassification" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <p>CSE440: Natural Language Processing II — Multi-Class LLM Prompt Safety Guardrails</p>
+    </div>
+  </footer>
+
+  <script src="models_data.js"></script>
+  <script src="three_scene.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

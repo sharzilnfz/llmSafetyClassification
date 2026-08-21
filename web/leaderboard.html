@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGuard AI | 10-Model Leaderboard</title>
+  <meta name="description" content="Empirical leaderboard across 10 NLP architectures on the WildGuardMix benchmark for CSE440.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D Scroll-Driven WebGL Background -->
+  <canvas id="threeBgCanvas"></canvas>
+
+  <!-- Sticky Minimal Header -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </div>
+        <span class="brand-title">AegisGuard AI</span>
+      </a>
+
+      <!-- Page Links -->
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Playground</a>
+        <a href="latent.html" class="nav-link">3D Space</a>
+        <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+        <a href="taxonomy.html" class="nav-link">Taxonomy</a>
+        <a href="stresstest.html" class="nav-link">Stress Test</a>
+      </nav>
+
+      <div class="header-meta">
+        <span class="badge badge-bonus">SOTA: 0.8624 F1</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <section class="page-header">
+      <h1 class="page-title">10-Model Empirical Leaderboard</h1>
+      <p class="page-subtitle">
+        Evaluated on the independent held-out human red-teaming test set ($N = 1,699$) with 3-way annotator consensus.
+      </p>
+    </section>
+
+    <!-- 4 Summary Stat Cards -->
+    <div class="stat-grid-4">
+      <div class="stat-box">
+        <div class="stat-label">Evaluated Models</div>
+        <div class="stat-val">10 Architectures</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Benchmark Pool</div>
+        <div class="stat-val">86,745 Prompts</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Held-Out Test Set</div>
+        <div class="stat-val">1,699 Samples</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">SOTA Test Macro F1</div>
+        <div class="stat-val" style="color:var(--status-safe);">0.8624 (Ensemble)</div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Table Card -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Performance Benchmark</h2>
+          <p class="card-description">Compare classification accuracy, macro F1, and optimal hyperparameter setups</p>
+        </div>
+        <span class="badge badge-outline">CSE440 Benchmark</span>
+      </div>
+
+      <!-- Filter Chips -->
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button class="filter-chip active" data-filter="all">All Models</button>
+        <button class="filter-chip" data-filter="transformer">Transformers</button>
+        <button class="filter-chip" data-filter="ensemble">Ensemble (Bonus)</button>
+        <button class="filter-chip" data-filter="rnn">Recurrent NNs</button>
+        <button class="filter-chip" data-filter="ml">Traditional ML</button>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Model Architecture</th>
+              <th>Family</th>
+              <th>Test Accuracy</th>
+              <th>Test Macro F1</th>
+              <th>Val Macro F1</th>
+              <th>Best Configuration</th>
+              <th>Empirical Highlight</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="index.html">Playground</a>
+        <span>•</span>
+        <a href="taxonomy.html">Taxonomy</a>
+        <span>•</span>
+        <a href="https://github.com/sharzilnfz/llmSafetyClassification" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <p>CSE440: Natural Language Processing II — Multi-Class LLM Prompt Safety Guardrails</p>
+    </div>
+  </footer>
+
+  <script src="models_data.js"></script>
+  <script src="three_scene.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

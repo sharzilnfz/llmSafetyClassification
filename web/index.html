@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGuard AI | Safety Playground</title>
+  <meta name="description" content="Minimalist prompt safety inspector across 10 NLP architectures on the WildGuardMix benchmark.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D Scroll-Driven WebGL Background -->
+  <canvas id="threeBgCanvas"></canvas>
+
+  <!-- Sticky Minimal Header with Multi-Page Navigation -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </div>
+        <span class="brand-title">AegisGuard AI</span>
+      </a>
+
+      <!-- Page Links -->
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">Playground</a>
+        <a href="latent.html" class="nav-link">3D Space</a>
+        <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+        <a href="taxonomy.html" class="nav-link">Taxonomy</a>
+        <a href="stresstest.html" class="nav-link">Stress Test</a>
+      </nav>
+
+      <div class="header-meta">
+        <span class="badge badge-outline"><span class="badge-dot"></span> Armed</span>
+        <span class="badge badge-bonus">Bonus (+2) Vercel</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Page Header -->
+    <section class="page-header">
+      <h1 class="page-title">Prompt Safety Playground</h1>
+      <p class="page-subtitle">
+        Real-time multi-class guardrail detecting harmful intent and adversarial jailbreaks across 10 NLP architectures.
+      </p>
+    </section>
+
+    <!-- 2-Column Playground Layout -->
+    <div class="grid-2col">
+      
+      <!-- Left Column: Input Controls -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Prompt Inspector</h2>
+            <p class="card-description">Test custom queries or select curated red-team presets</p>
+          </div>
+          <span class="badge badge-outline">Inference</span>
+        </div>
+
+        <!-- Model Switcher -->
+        <div class="form-group">
+          <label for="modelSelect" class="form-label">Active Model Architecture</label>
+          <select id="modelSelect" class="select-input"></select>
+        </div>
+
+        <!-- Dynamic Ensemble Weight Sliders -->
+        <div id="ensembleTunerBox" class="card-subtle-box" style="margin-bottom: 18px;">
+          <div style="display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--muted-foreground); margin-bottom: 10px;">
+            <span style="font-weight:600;">Soft-Voting Ensemble Weights</span>
+            <span style="font-family: var(--font-mono); font-size: var(--text-xs);">P_ens = w1*BERT + w2*BiGRU + w3*LR</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="font-family: var(--font-mono); font-size: var(--text-sm); width: 100px; color: var(--muted-foreground);">BERT (w1):</span>
+            <input type="range" id="weightBert" min="0" max="1" step="0.05" value="0.60" style="flex:1; accent-color:var(--foreground);">
+            <span id="weightBertVal" style="font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; width: 34px; text-align: right;">0.60</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="font-family: var(--font-mono); font-size: var(--text-sm); width: 100px; color: var(--muted-foreground);">Bi-GRU (w2):</span>
+            <input type="range" id="weightGru" min="0" max="1" step="0.05" value="0.25" style="flex:1; accent-color:var(--foreground);">
+            <span id="weightGruVal" style="font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; width: 34px; text-align: right;">0.25</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-family: var(--font-mono); font-size: var(--text-sm); width: 100px; color: var(--muted-foreground);">LogReg (w3):</span>
+            <input type="range" id="weightLr" min="0" max="1" step="0.05" value="0.15" style="flex:1; accent-color:var(--foreground);">
+            <span id="weightLrVal" style="font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; width: 34px; text-align: right;">0.15</span>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="form-group">
+          <label class="form-label">Attack & Safety Presets</label>
+          <div id="presetContainer" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="form-group">
+          <textarea 
+            id="promptInput" 
+            class="textarea-input" 
+            placeholder="Type or paste a prompt to evaluate safety..."
+            spellcheck="false"
+          ></textarea>
+          <div class="textarea-meta">
+            <span id="charCount">0 chars</span>
+            <span id="wordCount">0 words</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-row">
+          <button id="btnAnalyze" class="btn-primary" style="flex: 1;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Run Safety Guardrail
+          </button>
+          <button id="btnClear" class="btn-secondary">Clear</button>
+        </div>
+
+        <!-- Toggle Side-by-Side Comparison -->
+        <button id="toggleComparisonBtn" class="btn-secondary" style="width: 100%; margin-top: 14px; font-size: var(--text-sm);">
+          Compare All 10 Models Side-by-Side
+        </button>
+      </div>
+
+      <!-- Right Column: Verdict & Rationale -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Moderation Verdict</h2>
+            <p class="card-description">Probabilities across the 4-class taxonomy</p>
+          </div>
+          <span class="badge badge-outline">Policy</span>
+        </div>
+
+        <!-- Dynamic Verdict Banner -->
+        <div id="verdictBanner" class="verdict-box">
+          <div>
+            <h3 id="verdictTitle">Awaiting Input</h3>
+            <div id="verdictThreat" class="verdict-subtext">Select a preset or enter text</div>
+          </div>
+          <div id="verdictScore" class="verdict-score">0.0%</div>
+        </div>
+
+        <!-- 4-Class Probability Gauges -->
+        <div class="card-subtle-box" style="margin-bottom: 18px;">
+          <div class="prob-item">
+            <div class="prob-info">
+              <span style="color:var(--muted-foreground);">Class 0: Benign_Vanilla (Direct Safe)</span>
+              <span id="probPct0" style="font-weight:600;">0.0%</span>
+            </div>
+            <div class="meter-track"><div id="probTrack0" class="meter-fill fill-safe"></div></div>
+          </div>
+
+          <div class="prob-item">
+            <div class="prob-info">
+              <span style="color:var(--muted-foreground);">Class 1: Benign_Adversarial (Roleplay/Safe)</span>
+              <span id="probPct1" style="font-weight:600;">0.0%</span>
+            </div>
+            <div class="meter-track"><div id="probTrack1" class="meter-fill fill-warning"></div></div>
+          </div>
+
+          <div class="prob-item">
+            <div class="prob-info">
+              <span style="color:var(--muted-foreground);">Class 2: Harmful_Vanilla (Direct Threat)</span>
+              <span id="probPct2" style="font-weight:600;">0.0%</span>
+            </div>
+            <div class="meter-track"><div id="probTrack2" class="meter-fill fill-danger"></div></div>
+          </div>
+
+          <div class="prob-item">
+            <div class="prob-info">
+              <span style="color:var(--muted-foreground);">Class 3: Harmful_Adversarial (True Jailbreak)</span>
+              <span id="probPct3" style="font-weight:600;">0.0%</span>
+            </div>
+            <div class="meter-track"><div id="probTrack3" class="meter-fill fill-critical"></div></div>
+          </div>
+        </div>
+
+        <!-- Token Risk Heatmap -->
+        <div class="card-subtle-box" style="margin-bottom: 18px;">
+          <div style="display:flex; justify-content:space-between; font-size:var(--text-sm); font-weight:600; color:var(--muted-foreground);">
+            <span>Token Risk Inspector</span>
+            <span id="tokenCountBadge" class="badge badge-outline">0 Tokens</span>
+          </div>
+          <div id="tokenStream" class="token-container">
+            <span style="color:var(--muted-subtle);">Token analysis will appear here...</span>
+          </div>
+          <div style="display:flex; gap:12px; font-size:var(--text-xs); color:var(--muted-subtle);">
+            <span><span class="token-word adv">Framing</span> Framing Marker</span>
+            <span><span class="token-word harm">Malicious</span> Exploit Keyword</span>
+            <span><span class="token-word safe">Safe</span> Defensive Context</span>
+          </div>
+        </div>
+
+        <!-- Rationale -->
+        <div class="card-subtle-box">
+          <div style="font-size:var(--text-sm); font-weight:600; margin-bottom:6px;">Linguistic Rationale</div>
+          <div id="academicReasoning" style="font-size:var(--text-sm); color:var(--muted-foreground); line-height:1.6;">
+            Select a preset prompt above or enter custom text to view the theoretical model breakdown.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Synchronous Comparison Drawer -->
+    <div id="comparisonDrawer" class="card" style="margin-top: 24px; display: none;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">10-Model Synchronous Prediction Matrix</h3>
+          <p class="card-description">Simultaneous predictions across all evaluated NLP architectures</p>
+        </div>
+      </div>
+      <div id="comparisonGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;"></div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/sharzilnfz/llmSafetyClassification" target="_blank" rel="noopener">GitHub</a>
+        <span>•</span>
+        <a href="https://huggingface.co/datasets/allenai/wildguardmix" target="_blank" rel="noopener">WildGuardMix Benchmark</a>
+        <span>•</span>
+        <a href="leaderboard.html">Leaderboard</a>
+      </div>
+      <p>CSE440: Natural Language Processing II — Multi-Class LLM Prompt Safety Guardrails</p>
+    </div>
+  </footer>
+
+  <script src="models_data.js"></script>
+  <script src="three_scene.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

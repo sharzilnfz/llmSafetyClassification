@@ -28,6 +28,11 @@ wheels/
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
 *.nbconvert.ipynb
+*_partial.ipynb
+*.bak*
+
+# Legacy / Duplicate data dirs
+BERT Data/
 
 # PyTorch / ML Checkpoints & large model weights
 *.pt
@@ -35,14 +40,14 @@ wheels/
 *.bin
 *.onnx
 *.safetensors
+*.joblib
+*.keras
+models/
 checkpoints/
 models_saved/
 
 # Datasets - allow tracked dataset files in data/
-# (Oversized raw CSVs >100MB should be compressed with gzip or stored as parquet)
-data/train_clean.csv
 data/glove*.txt
-*.txt
 
 
 # Environment & local secrets

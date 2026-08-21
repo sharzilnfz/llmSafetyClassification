@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisGuard AI | 3D Latent Space</title>
+  <meta name="description" content="Interactive 3D latent vector embedding space across the 4-class prompt safety taxonomy.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D Scroll-Driven WebGL Background -->
+  <canvas id="threeBgCanvas"></canvas>
+
+  <!-- Sticky Minimal Header -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+        </div>
+        <span class="brand-title">AegisGuard AI</span>
+      </a>
+
+      <!-- Page Links -->
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Playground</a>
+        <a href="latent.html" class="nav-link active">3D Space</a>
+        <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+        <a href="taxonomy.html" class="nav-link">Taxonomy</a>
+        <a href="stresstest.html" class="nav-link">Stress Test</a>
+      </nav>
+
+      <div class="header-meta">
+        <span class="badge badge-outline"><span class="badge-dot"></span> 3D Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <section class="page-header">
+      <h1 class="page-title">3D Latent Vector Space</h1>
+      <p class="page-subtitle">
+        3D feature projection of the 86.7k WildGuardMix benchmark into a 4-quadrant semantic safety space.
+      </p>
+    </section>
+
+    <!-- Quadrant Cards Grid -->
+    <div class="grid-2col" style="margin-bottom: 28px;">
+      
+      <!-- Quadrant 1 -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" style="color:var(--status-safe);">
+            Quadrant 1: Benign Vanilla
+          </h2>
+          <span class="badge badge-safe">ALLOW</span>
+        </div>
+        <p style="margin-bottom: 14px; color: var(--muted-foreground);">
+          Standard direct safe requests clustered in the positive semantic subspace with low stylistic tension.
+        </p>
+        <div style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--muted-subtle); background:var(--card-subtle); padding:10px 14px; border-radius:var(--radius-sm);">
+          Cluster Centroid: [-4.0, +2.0, +2.0] • 25,482 Samples
+        </div>
+      </div>
+
+      <!-- Quadrant 2 -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" style="color:var(--status-warning);">
+            Quadrant 2: Benign Adversarial
+          </h2>
+          <span class="badge badge-warning">ALLOW</span>
+        </div>
+        <p style="margin-bottom: 14px; color: var(--muted-foreground);">
+          Safe requests wrapped in roleplay or hypothetical framing. Displaced along the framing axis without hazardous intent.
+        </p>
+        <div style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--muted-subtle); background:var(--card-subtle); padding:10px 14px; border-radius:var(--radius-sm);">
+          Cluster Centroid: [-3.0, -2.0, -2.0] • 18,340 Samples
+        </div>
+      </div>
+
+      <!-- Quadrant 3 -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" style="color:var(--status-danger);">
+            Quadrant 3: Harmful Vanilla
+          </h2>
+          <span class="badge badge-danger">BLOCK</span>
+        </div>
+        <p style="margin-bottom: 14px; color: var(--muted-foreground);">
+          Explicit dangerous requests stated directly on the high-hazard boundary without narrative obfuscation.
+        </p>
+        <div style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--muted-subtle); background:var(--card-subtle); padding:10px 14px; border-radius:var(--radius-sm);">
+          Cluster Centroid: [+4.0, +2.0, -2.0] • 22,610 Samples
+        </div>
+      </div>
+
+      <!-- Quadrant 4 -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" style="color:var(--status-critical);">
+            Quadrant 4: Harmful Adversarial
+          </h2>
+          <span class="badge badge-critical">BLOCK</span>
+        </div>
+        <p style="margin-bottom: 14px; color: var(--muted-foreground);">
+          True Jailbreaks: Malicious payloads concealed within fictional personas and jailbreak templates.
+        </p>
+        <div style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--muted-subtle); background:var(--card-subtle); padding:10px 14px; border-radius:var(--radius-sm);">
+          Cluster Centroid: [+4.0, -2.0, +3.0] • 20,313 Samples
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Interactive 3D Camera Controls -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Interactive 3D Camera Controls</h2>
+        <span class="badge badge-outline">WebGL</span>
+      </div>
+      <p style="margin-bottom: 18px; color: var(--muted-foreground);">
+        Scroll the page to dolly-orbit the 3D embedding space, or click below to trigger automated camera perspectives:
+      </p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn-secondary" onclick="if(window.sceneInstance) window.sceneInstance.targetCoord.set(-4, 2, 2)">Focus Quadrant 1 (Safe)</button>
+        <button class="btn-secondary" onclick="if(window.sceneInstance) window.sceneInstance.targetCoord.set(-3, -2, -2)">Focus Quadrant 2 (Roleplay)</button>
+        <button class="btn-secondary" onclick="if(window.sceneInstance) window.sceneInstance.targetCoord.set(4, 2, -2)">Focus Quadrant 3 (Threat)</button>
+        <button class="btn-secondary" onclick="if(window.sceneInstance) window.sceneInstance.targetCoord.set(4, -2, 3)">Focus Quadrant 4 (Jailbreak)</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="index.html">Playground</a>
+        <span>•</span>
+        <a href="leaderboard.html">Leaderboard</a>
+        <span>•</span>
+        <a href="https://github.com/sharzilnfz/llmSafetyClassification" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <p>CSE440: Natural Language Processing II — Multi-Class LLM Prompt Safety Guardrails</p>
+    </div>
+  </footer>
+
+  <script src="models_data.js"></script>
+  <script src="three_scene.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
