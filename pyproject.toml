@@ -12,6 +12,7 @@ dependencies = [
     "ipywidgets>=8.1.8",
     "jupyterlab>=4.6.3",
     "matplotlib>=3.11.1",
+    "modal>=1.5.4",
     "nltk>=3.10.2",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
