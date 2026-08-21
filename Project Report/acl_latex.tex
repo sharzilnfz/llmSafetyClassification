@@ -1,0 +1,186 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[final]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+
+\title{Efficient Multi-Task Safety Guardrail: Detecting Harmful Content and Jailbreak Attempts in a Single Classifier}
+
+\author{Sabbir Ahmed Shishir \and Sharzil Nafis \and Shagota Lagno \\
+  Department of Computer Science and Engineering \\
+  BRAC University \\
+  Dhaka, Bangladesh \\
+  \texttt{\{sabbir.ahmed.shishir, sharzil.nafis, shagota.lagno\}@g.bracu.ac.bd}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Securing Large Language Models (LLMs) against malicious inputs requires robust, low-latency moderation systems. Existing approaches often rely on computationally heavy, single-task classifiers or external APIs that introduce significant inference delays. This study presents an efficient, multi-task classification framework capable of simultaneously detecting overt policy violations and sophisticated adversarial jailbreak attempts. Utilizing the \textit{WildGuardMix} dataset[cite: 4], we implemented a comprehensive preprocessing pipeline—including rigorous deduplication and stopword ablation—to address inherent vocabulary repetition. We evaluated a spectrum of word representations (TF-IDF, GloVe) and model architectures ranging from classical machine learning algorithms to deep recurrent neural networks (RNNs). Our findings identify the Gated Recurrent Unit (GRU) as the optimal lightweight architecture, achieving an 81.70\% test accuracy and a 0.8100 Macro F1 score. The results demonstrate that targeted sequential modeling can capture the complex, long-range dependencies of adversarial wrappers without the parameter overhead of massive foundation models, offering a scalable security layer for real-time human-AI interactions.
+\end{abstract}
+
+\section{Introduction}
+The proliferation of Large Language Models (LLMs) in real-world applications has brought critical cybersecurity and safety alignment challenges to the forefront[cite: 3]. While modern LLMs undergo rigorous safety tuning via Reinforcement Learning from Human Feedback (RLHF), they remain susceptible to adversarial jailbreak attacks designed to bypass these safeguards[cite: 11]. Consequently, content moderation guardrails have become a mandatory security layer[cite: 6]. 
+
+However, existing moderation tools face two significant hurdles. First, systems are typically optimized for either direct toxicity detection or complex jailbreak identification, requiring developers to route prompts through multiple siloed classifiers. Second, state-of-the-art moderation frameworks are increasingly reliant on massive, billion-parameter LLMs themselves (e.g., Llama Guard)[cite: 6]. While highly accurate, utilizing an LLM to moderate another LLM introduces substantial computational overhead, increased API costs, and unacceptable latency bottlenecks in streaming or real-time dialogue contexts[cite: 5].
+
+To address these constraints, this project proposes an Efficient Multi-Task Safety Guardrail. The primary motivation is to engineer a unified, lightweight classifier capable of categorizing inputs into a four-class taxonomy: benign queries, overt harmful queries, benign roleplay/adversarial queries, and harmful adversarial jailbreaks. Leveraging the \textit{WildGuardMix} dataset[cite: 4], this study investigates the comparative efficacy of statistical word representations versus dense embeddings across various lightweight architectures.
+
+Our research is guided by the following core questions:
+\begin{itemize}
+    \item \textbf{RQ1:} How do data quality anomalies, such as extreme duplication and vocabulary homogeneity in adversarial datasets, impact the generalization of safety classifiers?
+    \item \textbf{RQ2:} Can lightweight deep sequential models (e.g., RNNs, LSTMs, GRUs) match or exceed the performance of classical statistical models in disentangling benign adversarial wrappers from genuinely harmful jailbreaks?
+\end{itemize}
+
+\section{Related Work}
+The landscape of LLM safety guardrails spans dataset taxonomy definition, inference-time optimization, and adversarial defense mechanisms.
+
+\textbf{Safety Taxonomies and Datasets:} Constructing effective moderation tools requires highly granular data. The \textit{WildGuard} framework introduced a massive 92K-sample multi-task dataset balancing vanilla prompts with adversarial jailbreaks[cite: 4]. Similarly, the AEGIS2.0 dataset expanded the safety taxonomy into 12 core and 9 fine-grained risk categories, demonstrating that parameter-efficient fine-tuning (PEFT) on diverse taxonomies yields highly adaptable guardrails[cite: 3]. Furthermore, the \textit{BeaverTails} dataset pioneered the decoupling of ``helpfulness'' and ``harmlessness'' annotations, providing essential human-preference data for nuanced safety alignment[cite: 7].
+
+\textbf{Low-Latency Detection Methods:} To mitigate the high computational costs of moderation, recent research has explored extracting safety signals directly from model internals. The Free Jailbreak Detection (FJD) approach and ``Toxicity Detection for Free'' demonstrate that inspecting the output logits and confidence scores of the target LLM's first generated token can reliably distinguish between benign and toxic prompts without requiring an independent classifier[cite: 2, 5]. FJD enhances this by prepending affirmative instructions and applying temperature scaling to amplify the confidence gap[cite: 2].
+
+\textbf{Adversarial and Agent-Based Defenses:} Defending against dynamic jailbreaks has inspired adversarial game frameworks. The In-Context Adversarial Game (ICAG) employs an agent-based max-min framework where attacker and defender agents continuously iterate, dynamically enhancing resistance to unseen prompts[cite: 11]. RigorLLM utilizes a hybrid approach, fusing LLMs with a robust K-Nearest Neighbors (KNN) model and leveraging Langevin dynamics for energy-based data generation to withstand adversarial noise[cite: 10]. In multi-agent environments, tools like \textit{NeMo Guardrails}[cite: 8] and \textit{GuardAgent}[cite: 9] implement programmable, code-based safety rails and knowledge-enabled reasoning to audit actions dynamically.
+
+Our work bridges these domains by applying the rigorous taxonomies of datasets like \textit{WildGuardMix}[cite: 4] to lightweight, highly efficient sequential architectures, aiming to deliver robust detection without the heavy parameter requirements of agent-based or LLM-based moderators.
+
+\section{Methodology}
+
+\subsection{Dataset}
+We utilized the \textit{WildGuardMix} dataset, which provides a comprehensive, multi-task moderation corpus[cite: 12]. The dataset classifies prompts into four distinct target categories: \texttt{Benign\_Vanilla} (0), \texttt{Benign\_Adversarial} (1), \texttt{Harmful\_Vanilla} (2), and \texttt{Harmful\_Adversarial} (3)[cite: 12]. 
+
+Our Exploratory Data Analysis (EDA) revealed critical structural characteristics[cite: 12]:
+\begin{itemize}
+    \item \textbf{Dimensions and Distributions:} The raw training set contained 86,759 instances, and the test set contained 1,699 instances. Class distributions were relatively balanced, with \texttt{Harmful\_Vanilla} representing the highest volume[cite: 12].
+    \item \textbf{Data Anomalies:} The training set exhibited severe data leakage risks, including 38,907 exact duplicate prompts and 14 completely empty strings[cite: 12].
+    \item \textbf{Text Statistics and Visualizations:} Word count boxplots indicated that the average prompt length is roughly 79 words[cite: 12]. However, the data is highly right-skewed, with the maximum adversarial prompt reaching 1,960 words (12,814 characters)[cite: 12]. Furthermore, the vocabulary diversity ratio was critically low at 0.0186, indicating extensive repetition of adversarial jailbreak templates (e.g., roleplay scenarios) across the dataset[cite: 12].
+\end{itemize}
+
+\subsection{Preprocessing}
+To address the EDA findings, a rigorous preprocessing pipeline was implemented[cite: 12]:
+\begin{enumerate}
+    \item \textbf{Deduplication:} All 38,907 duplicate prompts and empty strings were purged from the training set to prevent model over-fitting[cite: 12].
+    \item \textbf{Text Normalization:} Prompts were lowercased, and URLs and special punctuation were stripped via regex[cite: 12].
+    \item \textbf{Ablation Study on Stopwords:} We conducted a preprocessing ablation study comparing raw text, case-sensitive text, and stopword-removed text[cite: 12]. The results justified the removal of English stopwords, as it reduced vocabulary dimensionality and prevented models from overfitting on generic tokens, while unigram and bigram representations preserved the structural signal of adversarial phrases[cite: 12].
+\end{enumerate}
+
+\subsection{Word Representations}
+We deployed two distinct text representation strategies to accommodate our diverse model architectures[cite: 12]:
+\begin{itemize}
+    \item \textbf{TF-IDF Vectorization:} For classical machine learning models, text was transformed using Term Frequency-Inverse Document Frequency (TF-IDF) spanning unigrams and bigrams, capped at a maximum of 8,000 features to balance signal extraction with computational efficiency[cite: 12].
+    \item \textbf{Pretrained GloVe Embeddings:} For neural network architectures, we mapped subword tokens to a 100-dimensional dense vector space using pretrained GloVe embeddings (\texttt{glove.6B.100d})[cite: 12]. Sequence padding was calibrated dynamically to the 98th-percentile of prompt lengths, ensuring minimal truncation of verbose adversarial inputs[cite: 12]. The Tokenizer was restricted to a maximum vocabulary size covering 98\% of all token occurrences to mitigate Out-Of-Vocabulary (OOV) noise[cite: 12].
+\end{itemize}
+
+\subsection{Model Architectures}
+We systematically evaluated nine algorithms, broadly categorized into classical baselines and deep sequential models[cite: 12]:
+\begin{itemize}
+    \item \textbf{Classical ML:} Multinomial Naive Bayes, Logistic Regression (configured with L1/L2 penalties and balanced class weights to handle residual distribution skews), and Random Forest classifiers[cite: 12].
+    \item \textbf{Deep Sequential Models:} We implemented SimpleRNN, Long Short-Term Memory (LSTM), and Gated Recurrent Unit (GRU) architectures, alongside their Bidirectional variants (Bi-SimpleRNN, Bi-LSTM, Bi-GRU)[cite: 12]. Hyperparameter tuning was conducted across hidden units (32, 64, 128), dropout rates (0.2 to 0.4), and learning rates, utilizing the Adam optimizer with gradient clipping and Early Stopping callbacks[cite: 12].
+\end{itemize}
+
+\section{Results}
+The models were evaluated on the clean, held-out test set[cite: 12]. Performance was quantified using overall Test Accuracy and Macro F1 scores to ensure robust evaluation across minority classes. The consolidated comparison leaderboard is presented in Table \ref{tab:results}[cite: 12].
+
+\begin{table}[h]
+  \centering
+  \resizebox{\columnwidth}{!}{
+  \begin{tabular}{llcc}
+    \toprule
+    \textbf{Rank} & \textbf{Model} & \textbf{Test Accuracy} & \textbf{Test Macro F1} \\
+    \midrule
+    1 & GRU & \textbf{81.70\%} & \textbf{0.8100} \\
+    2 & Bi-GRU & 80.69\% & 0.8001 \\
+    3 & LSTM & 80.22\% & 0.7964 \\
+    4 & Logistic Regression & 79.34\% & 0.7892 \\
+    5 & Bi-LSTM & 79.11\% & 0.7852 \\
+    6 & SimpleRNN & 78.46\% & 0.7780 \\
+    7 & Bi-SimpleRNN & 76.75\% & 0.7627 \\
+    8 & Random Forest & 73.16\% & 0.7282 \\
+    9 & Naive Bayes & 69.45\% & 0.6926 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \caption{Final Test Set Comparison Leaderboard[cite: 12].}
+  \label{tab:results}
+\end{table}
+
+\subsection{Discussion of Configurations}
+\textbf{Best Performing Model:} The \textbf{GRU} architecture emerged as the dominant configuration, achieving 81.70\% Accuracy and an 0.8100 Macro F1 score[cite: 12]. As observed in the EDA, adversarial jailbreaks are characterized by highly verbose, context-dependent phrasing (e.g., lengthy roleplay scenarios wrapping a malicious request)[cite: 12]. The GRU's efficient gating mechanism successfully retained these long-range sequential dependencies, outperforming both the simpler RNNs (which suffer from vanishing gradients on 1,900+ word prompts) and the more complex LSTMs, likely due to the GRU's reduced parameter space preventing overfitting on the highly repetitive jailbreak vocabulary (diversity ratio of 0.0186)[cite: 12].
+
+\textbf{Worst Performing Model:} The \textbf{Naive Bayes} classifier yielded the lowest performance (69.45\% Accuracy)[cite: 12]. As a probabilistic bag-of-words model, it assumes feature independence and completely discards sequential word order. Consequently, it struggled to differentiate between benign text and adversarial text, as jailbreak attacks specifically rely on burying harmful trigger words inside overwhelming amounts of benign vocabulary. 
+
+\textbf{Confusion Matrix Insights:} Analysis of the generated confusion matrix heatmaps revealed that the most common classification errors occurred between the \texttt{Benign\_Adversarial} and \texttt{Harmful\_Adversarial} classes[cite: 12]. This indicates a fundamental dataset challenge: the semantic wrappers used to construct adversarial prompts are nearly identical regardless of the actual intent payload, making boundary demarcation difficult even for advanced sequential models.
+
+\section{Conclusion}
+This study validates the efficacy of lightweight, deep sequential architectures for multi-task LLM safety moderation. Through rigorous EDA and preprocessing of the \textit{WildGuardMix} dataset—specifically addressing massive duplication and extreme prompt lengths—we established a robust training pipeline[cite: 12]. Our evaluations demonstrated that the GRU model (81.70\% Accuracy) provides an optimal balance, effectively capturing the long-range contextual dependencies of adversarial jailbreaks without the prohibitive computational costs associated with deploying secondary LLMs as guardrails[cite: 12].
+
+\textbf{Limitations:} The primary limitation of this approach is its reliance on static pretrained embeddings (GloVe). While efficient, static embeddings cannot capture the dynamic polysemy of words in the way that transformer-based contextual embeddings (like BERT) do, which slightly limits the model's ability to interpret highly nuanced, novel jailbreak attacks.
+
+\textbf{Future Improvements:} Future iterations of this guardrail system should explore integrating inference-time detection methodologies, such as the Free Jailbreak Detection (FJD) logit inspection technique[cite: 2]. Coupling a highly efficient GRU pre-filter with a zero-cost logit inspector could yield a hybrid security pipeline that approaches the accuracy of LLM-based moderators while maintaining strictly bounded, millisecond-level latency for real-time human-AI conversational deployment.
+
+\begin{thebibliography}{99}
+
+\bibitem[Chen et al.(2025)]{chen2025} 
+Chen, G., Xia, Y., Jia, X., Li, Z., Torr, P., \& Gu, J. (2025). 
+\newblock \textit{LLM Jailbreak Detection for (Almost) Free!} 
+\newblock arXiv preprint arXiv:2509.14558v2.
+
+\bibitem[Ghosh et al.(2025)]{ghosh2025} 
+Ghosh, S., Varshney, P., Padmakumar, A., Varghese, J. R., Sreedhar, M. N., Rebedea, T., \& Parisien, C. (2025). 
+\newblock \textit{AEGIS2.0: A Diverse AI Safety Dataset and Risks Taxonomy for Alignment of LLM Guardrails.} 
+\newblock arXiv preprint arXiv:2501.09004v1.
+
+\bibitem[Han et al.(2024)]{han2024} 
+Han, S., Lin, B. Y., Rao, K., Ettinger, A., Jiang, L., Lambert, N., Choi, Y., \& Dziri, N. (2024). 
+\newblock \textit{WildGuard: Open One-stop Moderation Tools for Safety Risks, Jailbreaks, and Refusals of LLMs.} 
+\newblock 38th Conference on Neural Information Processing Systems (NeurIPS 2024).
+
+\bibitem[Hu et al.(2024)]{hu2024}
+Hu, Z., Piet, J., Zhao, G., Jiao, J., \& Wagner, D. (2024). 
+\newblock \textit{Toxicity Detection for Free.} 
+\newblock arXiv preprint arXiv:2405.18822v2.
+
+\bibitem[Inan et al.(2023)]{inan2023}
+Inan, H., Upasani, K., Chi, J., Rungta, R., Iyer, K., Mao, Y., \dots \& Khabsa, M. (2023). 
+\newblock \textit{Llama Guard: LLM-based Input-Output Safeguard for Human-AI Conversations.} 
+\newblock arXiv preprint arXiv:2312.06674v1.
+
+\bibitem[Ji et al.(2023)]{ji2023} 
+Ji, J., Liu, M., Dai, J., Pan, X., Zhang, C., Bian, C., Chen, B., Sun, R., Wang, Y., \& Yang, Y. (2023). 
+\newblock \textit{BeaverTails: Towards Improved Safety Alignment of LLM via a Human-Preference Dataset.} 
+\newblock 37th Conference on Neural Information Processing Systems (NeurIPS 2023).
+
+\bibitem[Rebedea et al.(2023)]{rebedea2023}
+Rebedea, T., Dinu, R., Sreedhar, M., Parisien, C., \& Cohen, J. (2023). 
+\newblock \textit{NeMo Guardrails: A Toolkit for Controllable and Safe LLM Applications with Programmable Rails.} 
+\newblock arXiv preprint arXiv:2310.10501v1.
+
+\bibitem[Xiang et al.(2025)]{xiang2025}
+Xiang, Z., Zheng, L., Li, Y., Hong, J., Xiong, Z., Xie, C., \dots \& Li, B. (2025). 
+\newblock \textit{GuardAgent: Safeguard LLM Agents via Knowledge-Enabled Reasoning.} 
+\newblock arXiv preprint arXiv:2406.09187v3.
+
+\bibitem[Yuan et al.(2024)]{yuan2024} 
+Yuan, Z., Xiong, Z., Zeng, Y., Yu, N., Jia, R., Song, D., \& Li, B. (2024). 
+\newblock \textit{RigorLLM: Resilient Guardrails for Large Language Models against Undesired Content.} 
+\newblock 41st International Conference on Machine Learning (ICML 2024).
+
+\bibitem[Zhou et al.(2025)]{zhou2025}
+Zhou, Y., Han, Y., Zhuang, H., Guo, K., Liang, Z., Bao, H., \& Zhang, X. (2025). 
+\newblock \textit{Defending Jailbreak Prompts via In-Context Adversarial Game.} 
+\newblock arXiv preprint arXiv:2402.13148v3.
+
+\end{thebibliography}
+
+\end{document}
